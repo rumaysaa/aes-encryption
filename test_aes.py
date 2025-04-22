@@ -38,12 +38,24 @@ inv_s_box = (
 )
 
 
-
+Rcon = (
+    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
+    0x80, 0x1B, 0x36, 0x6C, 0xD8, 0xAB, 0x4D, 0x9A,
+    0x2F, 0x5E, 0xBC, 0x63, 0xC6, 0x97, 0x35, 0x6A,
+    0xD4, 0xB3, 0x7D, 0xFA, 0xEF, 0xC5, 0x91, 0x39,
+)
 # AES SubBytes operation
 def sub_bytes(s):
     for i in range(4):
         for j in range(4):
             s[i][j] = s_box[s[i][j]]
+    return s
+
+# AES Inverse SubBytes operation
+def inv_sub_bytes(s):
+    for i in range(4):
+        for j in range(4):
+            s[i][j] = inv_s_box[s[i][j]]
     return s
 
 
@@ -54,7 +66,12 @@ def shift_rows(s):
     s[3][0], s[3][1], s[3][2], s[3][3] = s[3][3], s[3][0], s[3][1], s[3][2]
     return s
 
-
+# AES Inverse Shift Row operation
+def inv_shift_rows(s):
+    s[1][0], s[1][1], s[1][2], s[1][3] = s[1][3], s[1][0], s[1][1], s[1][2]
+    s[2][0], s[2][1], s[2][2], s[2][3] = s[2][0], s[2][1], s[2][3], s[2][2]
+    s[3][0], s[3][1], s[3][2], s[3][3] = s[3][1], s[3][2], s[3][3], s[3][0]
+    return s
 
 xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1) # XOR with 0x1B if the high bit is set
 
@@ -73,22 +90,58 @@ def mix_columns(s):
         mix_single_column(s[i])
     return s
 
-# Add Round Key function
+
+
+def bytes2matrix(text):
+    return [list(text[i:i+4]) for i in range(0, 16, 4)]
+
+def matrix2bytes(matrix):
+    return bytes(sum(matrix, []))
+
+def xor_bytes(a, b):
+    return bytes(i ^ j for i, j in zip(a, b))
+
 def add_round_key(s, k):
     for i in range(4):
         for j in range(4):
             s[i][j] ^= k[i][j]
-    return s
 
-# AES encryption function 
-def aes_encrypt_block(plaintext, key):
-    # Convert the 1D list into a 2D list for easier processing
-    state = [plaintext[i:i + 4] for i in range(0, len(plaintext), 4)]
-    state = sub_bytes(state)  # Apply SubBytes transformation
-    state = shift_rows(state)  # Apply ShiftRows transformation
-    state = mix_columns(state)  # Apply MixColumns transformation
-    state = add_round_key(state, [key[i:i + 4] for i in range(0, len(key), 4)])  # Add Round Key
-    return state
+
+class AES:
+    rounds_by_key_size = {16: 10}
+
+    def __init__(self, master_key):
+        self.n_rounds = AES.rounds_by_key_size[len(master_key)]
+        self._key_matrices = self._expand_key(master_key)
+
+    def _expand_key(self, master_key):
+        key_columns = bytes2matrix(master_key)
+        iteration_size = len(master_key) // 4
+        i = 1
+        while len(key_columns) < (self.n_rounds + 1) * 4:
+            word = list(key_columns[-1])
+            if len(key_columns) % iteration_size == 0:
+                word.append(word.pop(0))
+                word = [s_box[b] for b in word]
+                word[0] ^= Rcon[i]
+                i += 1
+            word = [a ^ b for a, b in zip(word, key_columns[-iteration_size])]
+            key_columns.append(word)
+        return [key_columns[4*i:4*(i+1)] for i in range(len(key_columns) // 4)]
+
+    def encrypt_block(self, plaintext):
+        assert len(plaintext) == 16
+        state = bytes2matrix(plaintext)
+        add_round_key(state, self._key_matrices[0])
+        for i in range(1, self.n_rounds):
+            sub_bytes(state)
+            shift_rows(state)
+            mix_columns(state)
+            add_round_key(state, self._key_matrices[i])
+        sub_bytes(state)
+        shift_rows(state)
+        add_round_key(state, self._key_matrices[-1])
+        return matrix2bytes(state)
 
 
 
@@ -102,13 +155,14 @@ def main():
         50, 20, 46, 86, 67, 9, 70, 27, 75, 17, 51, 17, 4, 8, 6, 99
     ]
 
-    # Perform encryption
-    ciphertext = aes_encrypt_block(plaintext, key)
+    aes = AES(bytes(key))              # Convert list to bytes
+    ciphertext = aes.encrypt_block(bytes(plaintext))  # Convert list to bytes
+    result = [ciphertext[i:i + 4] for i in range(0, len(ciphertext), 4)]
 
     # Print the SubBytes step output (intermediate)
-    print("\nSubBytes + ShiftRows + mix-columns output (intermediate):")
-    for row in ciphertext:
-        print(row)
+    print("\nEncrypted ciphertext:")
+    for row in result:
+        print("  ".join(str(byte) for byte in row))
 
 if __name__ == "__main__":
     main()

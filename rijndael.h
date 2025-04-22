@@ -13,6 +13,13 @@
 #define BLOCK_SIZE 16
 
 /*
+// Constants defining AES key size, number of rounds, and expanded key size
+*/
+#define KEY_SIZE 16
+#define NUM_ROUNDS 10
+#define EXPANDED_KEY_SIZE (KEY_SIZE * (NUM_ROUNDS + 1))
+
+/*
  * These should be the main encrypt/decrypt functions (i.e. the main
  * entry point to the library for programmes hoping to use it to
  * encrypt or decrypt data)
@@ -21,20 +28,12 @@ unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key);
 unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key);
 
 /*
- * Function to perform the SubBytes operation
+ * Internal functions used to implement the AES algorithm
  */
 void sub_bytes(unsigned char *block);
-/*
- * Function to perform the shift rows operation
- */
 void shift_rows(unsigned char *block);
-/*
- * Function to perform the mix columns operation
- */
 void mix_columns(unsigned char *block);
-/*
- * Function to perform the add round key operation
- */
 void add_round_key(unsigned char *block, unsigned char *round_key);
+unsigned char *expand_key(unsigned char *cipher_key);
 
 #endif
