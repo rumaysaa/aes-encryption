@@ -1,28 +1,48 @@
-name: Build and Test AES
+name: AES SubBytes Test
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install build-essential python3 python3-pip -y
+        pip install -r requirements.txt
 
-    - name: Build C code
-      run: make
-
-    - name: Run Python tests
+    - name: Run Python Tests
       run: |
-        pip install pytest
-        pytest test_aes.py
+        python -m unittest discover > result.log; tail -n 10 result.log
+
+    - name: Install build-essential
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential
+        sudo apt install -y libssl-dev
+
+    - name: Compile C code
+      run: |
+        gcc subbytes_c.c -o subbytes_c -lssl -lcrypto
+
+    - name: Run C Tests
+      run: |
+        ./subbytes_c > c_result.log; tail -n 10 c_result.log
+
+    - name: Compare Results
+      run: |
+        python t.py
