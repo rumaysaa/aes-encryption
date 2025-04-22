@@ -46,11 +46,19 @@ def sub_bytes(s):
             s[i][j] = s_box[s[i][j]]
     return s
 
+def shift_rows(s):
+    s[1][0], s[1][1], s[1][2], s[1][3] = s[1][1], s[1][2], s[1][3], s[1][0]
+    s[2][0], s[2][1], s[2][2], s[2][3] = s[2][2], s[2][3], s[2][0], s[2][1]
+    s[3][0], s[3][1], s[3][2], s[3][3] = s[3][3], s[3][0], s[3][1], s[3][2]
+    return s
+
 # AES encryption function 
 def aes_encrypt_block(plaintext, key):
     # Convert the 1D list into a 2D list for easier processing
     state = [plaintext[i:i + 4] for i in range(0, len(plaintext), 4)]
     state = sub_bytes(state)  # Apply SubBytes transformation
+    state = shift_rows(state)  # Apply ShiftRows transformation
+
     return state
 
 # Main function
@@ -67,7 +75,7 @@ def main():
     ciphertext = aes_encrypt_block(plaintext, key)
 
     # Print the SubBytes step output (intermediate)
-    print("\nSubBytes step output (intermediate):")
+    print("\nSubBytes + ShiftRows output (intermediate):")
     for row in ciphertext:
         print(row)
 

@@ -10,11 +10,9 @@ void print_128bit_block(unsigned char *block) {
 
       // Print spaces before small numbers to ensure that everything is aligned
       // and looks nice
-      if (value < 10) printf(" ");
+      
 
-      if (value < 100) printf(" ");
-
-      printf("%d", value);
+      printf("%3d ", value);
     }
     printf("\n");
   }
@@ -27,7 +25,7 @@ int main() {
                            75, 17, 51, 17, 4,  8, 6,  99};
 
   unsigned char *ciphertext = aes_encrypt_block(plaintext, key);
-  printf("\nSubBytes step output (intermediate):\n");
+  printf("\nSubBytes + ShiftRows step output (intermediate):\n");
   unsigned char *recovered_plaintext = aes_decrypt_block(ciphertext, key);
 
   printf("############ ORIGINAL PLAINTEXT ###########\n");

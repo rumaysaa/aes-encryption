@@ -37,7 +37,29 @@ void sub_bytes(unsigned char *block) {
 }
 
 void shift_rows(unsigned char *block) {
-  // TODO: Implement me!
+  unsigned char temp;
+    
+  // Row 1: Shift left by 1
+  temp = BLOCK_ACCESS(block, 1, 0);
+  BLOCK_ACCESS(block, 1, 0) = BLOCK_ACCESS(block, 1, 1);
+  BLOCK_ACCESS(block, 1, 1) = BLOCK_ACCESS(block, 1, 2);
+  BLOCK_ACCESS(block, 1, 2) = BLOCK_ACCESS(block, 1, 3);
+  BLOCK_ACCESS(block, 1, 3) = temp;
+  
+  // Row 2: Shift left by 2
+  temp = BLOCK_ACCESS(block, 2, 0);
+  BLOCK_ACCESS(block, 2, 0) = BLOCK_ACCESS(block, 2, 2);
+  BLOCK_ACCESS(block, 2, 2) = temp;
+  temp = BLOCK_ACCESS(block, 2, 1);
+  BLOCK_ACCESS(block, 2, 1) = BLOCK_ACCESS(block, 2, 3);
+  BLOCK_ACCESS(block, 2, 3) = temp;
+  
+  // Row 3: Shift left by 3 (equivalent to right by 1)
+  temp = BLOCK_ACCESS(block, 3, 3);
+  BLOCK_ACCESS(block, 3, 3) = BLOCK_ACCESS(block, 3, 2);
+  BLOCK_ACCESS(block, 3, 2) = BLOCK_ACCESS(block, 3, 1);
+  BLOCK_ACCESS(block, 3, 1) = BLOCK_ACCESS(block, 3, 0);
+  BLOCK_ACCESS(block, 3, 0) = temp;
 }
 
 void mix_columns(unsigned char *block) {
@@ -92,7 +114,7 @@ unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key) {
 
   // Apply SubBytes
   sub_bytes(output);
-
+  shift_rows(output);
   return output;
 }
 

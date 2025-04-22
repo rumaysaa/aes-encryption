@@ -24,5 +24,9 @@ unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key);
  * Function to perform the SubBytes operation
  */
 void sub_bytes(unsigned char *block);
+/*
+ * Function to perform the shift rows operation
+ */
+void shift_rows(unsigned char *block);
 
 #endif
