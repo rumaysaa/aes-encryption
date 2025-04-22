@@ -28,5 +28,9 @@ void sub_bytes(unsigned char *block);
  * Function to perform the shift rows operation
  */
 void shift_rows(unsigned char *block);
+/*
+ * Function to perform the mix columns operation
+ */
+void mix_columns(unsigned char *block);
 
 #endif

@@ -25,7 +25,7 @@ int main() {
                            75, 17, 51, 17, 4,  8, 6,  99};
 
   unsigned char *ciphertext = aes_encrypt_block(plaintext, key);
-  printf("\nSubBytes + ShiftRows step output (intermediate):\n");
+  printf("\nSubBytes + ShiftRows + mix-columns step output (intermediate):\n");
   unsigned char *recovered_plaintext = aes_decrypt_block(ciphertext, key);
 
   printf("############ ORIGINAL PLAINTEXT ###########\n");

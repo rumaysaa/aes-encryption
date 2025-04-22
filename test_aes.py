@@ -52,13 +52,30 @@ def shift_rows(s):
     s[3][0], s[3][1], s[3][2], s[3][3] = s[3][3], s[3][0], s[3][1], s[3][2]
     return s
 
+xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)
+
+def mix_single_column(a):
+    # see Sec 4.1.2 in The Design of Rijndael
+    t = a[0] ^ a[1] ^ a[2] ^ a[3]
+    u = a[0]
+    a[0] ^= t ^ xtime(a[0] ^ a[1])
+    a[1] ^= t ^ xtime(a[1] ^ a[2])
+    a[2] ^= t ^ xtime(a[2] ^ a[3])
+    a[3] ^= t ^ xtime(a[3] ^ u)
+
+
+def mix_columns(s):
+    for i in range(4):
+        mix_single_column(s[i])
+    return s
+
 # AES encryption function 
 def aes_encrypt_block(plaintext, key):
     # Convert the 1D list into a 2D list for easier processing
     state = [plaintext[i:i + 4] for i in range(0, len(plaintext), 4)]
     state = sub_bytes(state)  # Apply SubBytes transformation
     state = shift_rows(state)  # Apply ShiftRows transformation
-
+    state = mix_columns(state)  # Apply MixColumns transformation
     return state
 
 # Main function
@@ -75,7 +92,7 @@ def main():
     ciphertext = aes_encrypt_block(plaintext, key)
 
     # Print the SubBytes step output (intermediate)
-    print("\nSubBytes + ShiftRows output (intermediate):")
+    print("\nSubBytes + ShiftRows + mix-columns output (intermediate):")
     for row in ciphertext:
         print(row)
 
