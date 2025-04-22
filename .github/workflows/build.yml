@@ -37,12 +37,12 @@ jobs:
 
     - name: Compile C code
       run: |
-        gcc subbytes_c.c -o subbytes_c -lssl -lcrypto
+        gcc main.c rijndael.c -o aes-encryption
 
     - name: Run C Tests
       run: |
-        ./subbytes_c > c_result.log; tail -n 10 c_result.log
+        ./aes-encryption  > c_result.log; tail -n 10 c_result.log
 
     - name: Compare Results
       run: |
-        python t.py
+        python test_aes.py
