@@ -1,4 +1,4 @@
-name: AES SubBytes Test
+name: AES Test
 
 on:
   push:

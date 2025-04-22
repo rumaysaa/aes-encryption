@@ -46,15 +46,19 @@ def sub_bytes(s):
             s[i][j] = s_box[s[i][j]]
     return s
 
+
+#AES Shift Row operation
 def shift_rows(s):
     s[1][0], s[1][1], s[1][2], s[1][3] = s[1][1], s[1][2], s[1][3], s[1][0]
     s[2][0], s[2][1], s[2][2], s[2][3] = s[2][2], s[2][3], s[2][0], s[2][1]
     s[3][0], s[3][1], s[3][2], s[3][3] = s[3][3], s[3][0], s[3][1], s[3][2]
     return s
 
-xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)
 
-def mix_single_column(a):
+
+xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1) # XOR with 0x1B if the high bit is set
+
+def mix_single_column(a): 
     # see Sec 4.1.2 in The Design of Rijndael
     t = a[0] ^ a[1] ^ a[2] ^ a[3]
     u = a[0]
@@ -69,6 +73,13 @@ def mix_columns(s):
         mix_single_column(s[i])
     return s
 
+# Add Round Key function
+def add_round_key(s, k):
+    for i in range(4):
+        for j in range(4):
+            s[i][j] ^= k[i][j]
+    return s
+
 # AES encryption function 
 def aes_encrypt_block(plaintext, key):
     # Convert the 1D list into a 2D list for easier processing
@@ -76,7 +87,10 @@ def aes_encrypt_block(plaintext, key):
     state = sub_bytes(state)  # Apply SubBytes transformation
     state = shift_rows(state)  # Apply ShiftRows transformation
     state = mix_columns(state)  # Apply MixColumns transformation
+    state = add_round_key(state, [key[i:i + 4] for i in range(0, len(key), 4)])  # Add Round Key
     return state
+
+
 
 # Main function
 def main():

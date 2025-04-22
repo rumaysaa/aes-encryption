@@ -32,5 +32,9 @@ void shift_rows(unsigned char *block);
  * Function to perform the mix columns operation
  */
 void mix_columns(unsigned char *block);
+/*
+ * Function to perform the add round key operation
+ */
+void add_round_key(unsigned char *block, unsigned char *round_key);
 
 #endif
