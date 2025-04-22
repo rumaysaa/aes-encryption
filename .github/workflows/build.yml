@@ -41,7 +41,7 @@ jobs:
 
     - name: Run C Tests
       run: |
-        ./aes-encryption  > c_result.log; tail -n 10 c_result.log
+        ./aes-encryption  
 
     - name: Compare Results
       run: |
