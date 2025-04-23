@@ -50,6 +50,6 @@ jobs:
       run: |
         ./aes-encryption  
 
-    # - name: Compare Results
-    #   run: |
-    #     python test_aes.py
+    - name: Run tests
+      run: |
+        python3 -m pytest test_aes_v2.py -v
