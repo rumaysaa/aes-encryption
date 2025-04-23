@@ -201,9 +201,9 @@ class TestAES(unittest.TestCase):
             inv_mix_columns(py_matrix)
             py_result = matrix2bytes(py_matrix)
             
-            # Debug prints (optional)
+            # Debug prints 
             print(f"Test {i+1}/3:")
-            print(f"Input data: {input_data.hex()}")
+            print(f"Input data: {input_data.hex()}") 
             print(f"C result: {c_result.hex()}")
             print(f"Python result: {py_result.hex()}")
             
