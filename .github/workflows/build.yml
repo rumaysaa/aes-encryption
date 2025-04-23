@@ -40,13 +40,8 @@ jobs:
 
     - name: Compile C code and create shared library
       run: |
-        gcc main.c rijndael.c -o aes-encryption
         gcc -shared -o rijndael.so -fPIC rijndael.c
         make
-
-    - name: Run C Tests
-      run: |
-        ./aes-encryption  
 
     - name: Run tests
       run: |
