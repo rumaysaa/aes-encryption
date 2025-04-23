@@ -14,10 +14,15 @@ jobs:
 
     steps: 
 
-    - name: Checkout Code
+    - name: Checkout Code  with submodules
       uses: actions/checkout@v3
       with:
         submodules: recursive
+        fetch-depth: 0
+        fetch-submodules: true
+
+    - name: List contents of 'aes' submodule
+      run: ls -l aes
 
     - name: Set up Python
       uses: actions/setup-python@v2
