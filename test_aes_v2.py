@@ -11,17 +11,18 @@ import unittest
 
 # Add aes submodule to path
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'aes')))
-
-# Import the AES implementation
+# Add aes submodule to path
+sys.path.append('./aes')  # Import the AES implementation from the submodule
 try:
     from aes import AES, encrypt, decrypt
-    # Import transformation functions if needed
+    # Import the individual transformation functions directly since they are available
     from aes import sub_bytes, shift_rows, mix_columns, add_round_key
+    from aes import bytes2matrix, matrix2bytes
+    from aes import inv_sub_bytes, inv_shift_rows, inv_mix_columns
 except ImportError:
-    print("Error: Could not import the AES implementation.")
+    print("Error: Could not import the reference AES implementation.")
+    print("Please ensure you have added a Python AES implementation as a submodule.")
     sys.exit(1)
-
 def bytes2matrix(input_bytes):
     """Convert a 16-byte array to a 4x4 matrix (list of lists)."""
     matrix = []
