@@ -79,14 +79,16 @@ void sub_bytes(unsigned char *block) {
 void shift_rows(unsigned char *block) {
   unsigned char temp;
 
-  // Row 1: Shift left by 1
+  // Row 0: No shift (do nothing)
+
+  // Row 1: Shift left by 1 [a, b, c, d] -> [b, c, d, a]
   temp = BLOCK_ACCESS(block, 1, 0);
   BLOCK_ACCESS(block, 1, 0) = BLOCK_ACCESS(block, 1, 1);
   BLOCK_ACCESS(block, 1, 1) = BLOCK_ACCESS(block, 1, 2);
   BLOCK_ACCESS(block, 1, 2) = BLOCK_ACCESS(block, 1, 3);
   BLOCK_ACCESS(block, 1, 3) = temp;
 
-  // Row 2: Shift left by 2
+  // Row 2: Shift left by 2 [a, b, c, d] -> [c, d, a, b]
   temp = BLOCK_ACCESS(block, 2, 0);
   BLOCK_ACCESS(block, 2, 0) = BLOCK_ACCESS(block, 2, 2);
   BLOCK_ACCESS(block, 2, 2) = temp;
@@ -94,13 +96,14 @@ void shift_rows(unsigned char *block) {
   BLOCK_ACCESS(block, 2, 1) = BLOCK_ACCESS(block, 2, 3);
   BLOCK_ACCESS(block, 2, 3) = temp;
 
-  // Row 3: Shift left by 3 (equivalent to right by 1)
+  // Row 3: Shift left by 3 [a, b, c, d] -> [d, a, b, c]
   temp = BLOCK_ACCESS(block, 3, 3);
   BLOCK_ACCESS(block, 3, 3) = BLOCK_ACCESS(block, 3, 2);
   BLOCK_ACCESS(block, 3, 2) = BLOCK_ACCESS(block, 3, 1);
   BLOCK_ACCESS(block, 3, 1) = BLOCK_ACCESS(block, 3, 0);
   BLOCK_ACCESS(block, 3, 0) = temp;
 }
+
 
 unsigned char xtime(unsigned char a) {
   if (a & 0x80) {
@@ -122,9 +125,9 @@ void mix_single_column(unsigned char *a) {
 void mix_columns(unsigned char *state) {
   unsigned char col[4];
   for (int i = 0; i < 4; i++) {
-      // Get i-th column
+      // Get i-th column (column-major order)
       for (int j = 0; j < 4; j++) {
-          col[j] = state[i + j * 4];
+          col[j] = state[j + i * 4]; // Changed from i + j * 4
       }
 
       // Mix it
@@ -132,7 +135,7 @@ void mix_columns(unsigned char *state) {
 
       // Store back
       for (int j = 0; j < 4; j++) {
-          state[i + j * 4] = col[j];
+          state[j + i * 4] = col[j]; // Changed from i + j * 4
       }
   }
 }
