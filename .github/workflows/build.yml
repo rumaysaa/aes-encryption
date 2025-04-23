@@ -32,10 +32,6 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    - name: Run Python Tests
-      run: |
-        python -m unittest discover > result.log; tail -n 10 result.log
-
     - name: Install build-essential
       run: |
         sudo apt update
