@@ -23,6 +23,7 @@ except ImportError:
     print("Error: Could not import the reference AES implementation.")
     print("Please ensure you have added a Python AES implementation as a submodule.")
     sys.exit(1)
+    
 def bytes2matrix(input_bytes):
     """Convert a 16-byte array to a 4x4 matrix (list of lists)."""
     matrix = []
