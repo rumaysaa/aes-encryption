@@ -38,9 +38,11 @@ jobs:
         sudo apt install -y build-essential
         sudo apt install -y libssl-dev
 
-    - name: Compile C code
+    - name: Compile C code and create shared library
       run: |
         gcc main.c rijndael.c -o aes-encryption
+        gcc -shared -o rijndael.so -fPIC rijndael.c
+        make
 
     - name: Run C Tests
       run: |
