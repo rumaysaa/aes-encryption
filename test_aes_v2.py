@@ -11,7 +11,7 @@ import unittest
 
 # Add aes submodule to path
 import sys
-sys.path.append('./aes')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'aes')))
 
 # Import the AES implementation
 try:
