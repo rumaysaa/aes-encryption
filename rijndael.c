@@ -62,11 +62,9 @@ unsigned char INV_S_BOX[256] = {
     0x55, 0x21, 0x0C, 0x7D,
 };
 
-// Round constant table (Rcon)
-unsigned char Rcon[32] = {
-    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36,
-    0x6C, 0xD8, 0xAB, 0x4D, 0x9A, 0x2F, 0x5E, 0xBC, 0x63, 0xC6, 0x97,
-    0x35, 0x6A, 0xD4, 0xB3, 0x7D, 0xFA, 0xEF, 0xC5, 0x91, 0x39,
+ /* Round constants for key expansion */
+ static const unsigned char Rcon[10] = {
+  0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
 /*
@@ -121,26 +119,85 @@ void mix_single_column(unsigned char *a) {
   a[3] ^= t ^ xtime(a[3] ^ u);
 }
 
-void mix_columns(unsigned char *block) {
+void mix_columns(unsigned char *state) {
+  unsigned char col[4];
   for (int i = 0; i < 4; i++) {
-    mix_single_column(block + i * 4);
+      // Get i-th column
+      for (int j = 0; j < 4; j++) {
+          col[j] = state[i + j * 4];
+      }
+
+      // Mix it
+      mix_single_column(col);
+
+      // Store back
+      for (int j = 0; j < 4; j++) {
+          state[i + j * 4] = col[j];
+      }
   }
 }
-
 /*
  * Operations used when decrypting a block
  */
 void invert_sub_bytes(unsigned char *block) {
-  // TODO: Implement me!
+  for (int i = 0; i < BLOCK_SIZE; i++) {
+    block[i] = INV_S_BOX[block[i]];
+  }
 }
 
 void invert_shift_rows(unsigned char *block) {
-  // TODO: Implement me!
+  unsigned char temp;
+
+  // Row 1: Shift right by 1
+  temp = BLOCK_ACCESS(block, 1, 3);
+  BLOCK_ACCESS(block, 1, 3) = BLOCK_ACCESS(block, 1, 2);
+  BLOCK_ACCESS(block, 1, 2) = BLOCK_ACCESS(block, 1, 1);
+  BLOCK_ACCESS(block, 1, 1) = BLOCK_ACCESS(block, 1, 0);
+  BLOCK_ACCESS(block, 1, 0) = temp;
+
+  // Row 2: Shift right by 2
+  temp = BLOCK_ACCESS(block, 2, 0);
+  BLOCK_ACCESS(block, 2, 0) = BLOCK_ACCESS(block, 2, 2);
+  BLOCK_ACCESS(block, 2, 2) = temp;
+
+  temp = BLOCK_ACCESS(block, 2, 1);
+  BLOCK_ACCESS(block, 2, 1) = BLOCK_ACCESS(block, 2, 3);
+  BLOCK_ACCESS(block, 2, 3) = temp;
+
+  // Row3: Shift right by (equivalent to left by one)
+  temp = BLOCK_ACCESS(block, 3, 0);
+  BLOCK_ACCESS(block, 3, 0) = BLOCK_ACCESS(block, 3, 1);
+  BLOCK_ACCESS(block, 3, 1) = BLOCK_ACCESS(block, 3, 2);
+  BLOCK_ACCESS(block, 3, 2) = BLOCK_ACCESS(block, 3, 3);
+  BLOCK_ACCESS(block, 3, 3) = temp;
+}
+// helper function for Galois multiplication
+unsigned char gmul(unsigned char a, unsigned char b) {
+  unsigned char result = 0;
+  for (int i = 0; i < 8; i++) {
+      if (b & 1) result ^= a;
+      a = xtime(a);
+      b >>= 1;
+  }
+  return result;
+}
+void invert_mix_columns(unsigned char *block) {
+  unsigned char a[4];
+    for (int i = 0; i < 4; i++) {
+        // Extract the column
+        for (int j = 0; j < 4; j++) {
+            a[j] = BLOCK_ACCESS(block, j, i);
+        }
+
+        // Inverse MixColumns transformation
+        BLOCK_ACCESS(block, 0, i) = gmul(a[0], 0x0E) ^ gmul(a[1], 0x0B) ^ gmul(a[2], 0x0D) ^ gmul(a[3], 0x09);
+        BLOCK_ACCESS(block, 1, i) = gmul(a[0], 0x09) ^ gmul(a[1], 0x0E) ^ gmul(a[2], 0x0B) ^ gmul(a[3], 0x0D);
+        BLOCK_ACCESS(block, 2, i) = gmul(a[0], 0x0D) ^ gmul(a[1], 0x09) ^ gmul(a[2], 0x0E) ^ gmul(a[3], 0x0B);
+        BLOCK_ACCESS(block, 3, i) = gmul(a[0], 0x0B) ^ gmul(a[1], 0x0D) ^ gmul(a[2], 0x09) ^ gmul(a[3], 0x0E);
+    }
 }
 
-void invert_mix_columns(unsigned char *block) {
-  // TODO: Implement me!
-}
+
 
 /*
  * This operation is shared between encryption and decryption
@@ -192,8 +249,8 @@ unsigned char *expand_key(unsigned char *cipher_key) {
     if (i % KEY_SIZE == 0) {
       rot_word(temp);
       sub_word(temp);
-      temp[0] ^= Rcon[i / KEY_SIZE];  // XOR with round constant
-    }
+      temp[0] ^= Rcon[(i / KEY_SIZE) - 1]; // Correct Rcon index
+  }
 
     // XOR the temp word with the previous word
     for (int j = 0; j < 4; j++) {
@@ -210,7 +267,8 @@ unsigned char *expand_key(unsigned char *cipher_key) {
  * header file should go here
  */
 unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key) {
-  unsigned char *output = (unsigned char *)malloc(sizeof(unsigned char) * BLOCK_SIZE);
+  unsigned char *output =
+      (unsigned char *)malloc(sizeof(unsigned char) * BLOCK_SIZE);
 
   // Initialize state with the input block
   for (int i = 0; i < 16; i++) {
@@ -228,17 +286,21 @@ unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key) {
     sub_bytes(output);
     shift_rows(output);
     mix_columns(output);
-    add_round_key(output, expanded_key + round * BLOCK_SIZE);  // Use correct round key
+    add_round_key(output,
+                  expanded_key + round * BLOCK_SIZE);  // Use correct round key
   }
 
   // Final round (no mix_columns)
   sub_bytes(output);
   shift_rows(output);
-  add_round_key(output, expanded_key + NUM_ROUNDS * BLOCK_SIZE);  // Correct round key for final round
+  add_round_key(
+      output,
+      expanded_key +
+          NUM_ROUNDS * BLOCK_SIZE);  // Correct round key for final round
 
-  //memcpy(output, output, BLOCK_SIZE);  // Copy the result to output
+  memcpy(output, output, BLOCK_SIZE);  // Copy the result to output
 
-  //free(expanded_key);  // Free memory used by expanded key
+  // free(expanded_key);  // Free memory used by expanded key
   return output;
 }
 
@@ -247,5 +309,35 @@ unsigned char *aes_decrypt_block(unsigned char *ciphertext,
   // TODO: Implement me!
   unsigned char *output =
       (unsigned char *)malloc(sizeof(unsigned char) * BLOCK_SIZE);
+  unsigned char state[BLOCK_SIZE];
+  memcpy(state, ciphertext, BLOCK_SIZE);  // Copy ciphertext into state
+
+  // Expand the key (same as encryption)
+  unsigned char *expanded_key = expand_key(key);
+
+  // Initial AddRoundKey (XOR with the last round key)
+  add_round_key(
+      state, expanded_key +
+                 NUM_ROUNDS * BLOCK_SIZE);  // Add round key for the last round
+
+  // Perform 9 rounds (since the 10th is the final round)
+  for (int round = NUM_ROUNDS - 1; round > 0; round--) {
+    invert_shift_rows(state);  // Inverse ShiftRows
+    invert_sub_bytes(state);   // Inverse SubBytes
+    add_round_key(state, expanded_key +
+                             round * BLOCK_SIZE);  // AddRoundKey for this round
+    invert_mix_columns(state);  // Inverse MixColumns (not for the final round)
+  }
+
+  // Final round (no inverse MixColumns)
+  invert_shift_rows(state);            // Inverse ShiftRows
+  invert_sub_bytes(state);             // Inverse SubBytes
+  add_round_key(state, expanded_key);  // Add round key for the first round
+
+  // Copy the decrypted data into the output
+  memcpy(output, state, BLOCK_SIZE);
+
   return output;
 }
+
+
