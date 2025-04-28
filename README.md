@@ -1,0 +1,1 @@
+Notes: Please consider test_aes_v2.py file as the test_aes.py file is wrong, i misunderstood the testing of python and tested the output of python code  one by one with c. The v2 file is the correct one as it do the testing from the already implemented pyhton code.
