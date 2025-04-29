@@ -129,7 +129,7 @@ void mix_columns(unsigned char *state) {
   for (int i = 0; i < 4; i++) {
     // Get i-th column (column-major order)
     for (int j = 0; j < 4; j++) {
-      col[j] = state[j + i * 4];  // Changed from i + j * 4
+      col[j] = state[j + i * 4];  
     }
 
     // Mix it
@@ -137,7 +137,7 @@ void mix_columns(unsigned char *state) {
 
     // Store back
     for (int j = 0; j < 4; j++) {
-      state[j + i * 4] = col[j];  // Changed from i + j * 4
+      state[j + i * 4] = col[j]; 
     }
   }
 }
