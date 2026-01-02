@@ -1,7 +1,3 @@
----
-description: Repository Information Overview
-alwaysApply: true
----
 
 # Repository Information Overview
 
